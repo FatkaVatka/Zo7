@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CRM-система: клиенты, сделки, активности">
+  <title>CRM System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Тема применяется до рендера DOM (анти-FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        var sys = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t || sys;
+
+        var a = localStorage.getItem('accent');
+        if (a) {
+          var n = parseInt(a.slice(1), 16);
+          document.documentElement.style.setProperty('--accent', a);
+          document.documentElement.style.setProperty('--accent-rgb',
+            [(n>>16)&255, (n>>8)&255, n&255].join(', '));
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Перейти к основному контенту</a>
+
+  <header class="header">
+    <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="sidebar">
+      <span></span><span></span><span></span>
+    </button>
+    <h1 class="header__title">CRM System</h1>
+    <nav class="header__nav" aria-label="Настройки">
+      <label class="accent-picker" aria-label="Выбрать акцентный цвет">
+        <span class="visually-hidden">Акцентный цвет</span>
+        <input type="color" id="accent-picker" value="#4f46e5">
+      </label>
+      <button class="icon-btn" id="theme-toggle" aria-label="Переключить тему">
+        <span class="icon-sun" aria-hidden="true">☀</span>
+        <span class="icon-moon" aria-hidden="true">☾</span>
+      </button>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Навигация">
+      <nav>
+        <ul class="sidebar__list">
+          <li><a href="#clients" class="sidebar__link is-active" aria-current="page">Клиенты</a></li>
+          <li><a href="#deals" class="sidebar__link">Сделки</a></li>
+          <li><a href="#activities" class="sidebar__link">Активности</a></li>
+        </ul>
+      </nav>
+    </aside>
+    <div class="overlay" id="overlay" hidden></div>
+
+    <main id="main" class="main">
+      <!-- Фильтры -->
+      <section class="panel" aria-labelledby="filters-title">
+        <h2 id="filters-title">Фильтры</h2>
+        <form id="filters" role="search">
+          <div class="filters__row">
+            <div class="field">
+              <label for="search">Поиск</label>
+              <input type="search" id="search" name="search" placeholder="Имя, компания, email…" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="status">Статус</label>
+              <select id="status" name="status">
+                <option value="">Все</option>
+                <option value="active">Активные</option>
+                <option value="lead">Лиды</option>
+                <option value="inactive">Неактивные</option>
+                <option value="blocked">Заблокированные</option>
+              </select>
+            </div>
+          </div>
+
+          <fieldset class="filters__group">
+            <legend>Теги</legend>
+            <label class="checkbox"><input type="checkbox" name="tags" value="VIP"><span class="checkbox__mark"></span>VIP</label>
+            <label class="checkbox"><input type="checkbox" name="tags" value="B2B"><span class="checkbox__mark"></span>B2B</label>
+            <label class="checkbox"><input type="checkbox" name="tags" value="опт"><span class="checkbox__mark"></span>Опт</label>
+            <label class="checkbox"><input type="checkbox" name="tags" value="новый"><span class="checkbox__mark"></span>Новый</label>
+          </fieldset>
+
+          <fieldset class="filters__group">
+            <legend>Вид</legend>
+            <label class="radio"><input type="radio" name="view" value="cards" checked><span class="radio__mark"></span>Карточки</label>
+            <label class="radio"><input type="radio" name="view" value="table"><span class="radio__mark"></span>Таблица</label>
+          </fieldset>
+
+          <button type="reset" class="btn btn--ghost">Сбросить</button>
+        </form>
+      </section>
+
+      <!-- Клиенты -->
+      <section class="panel" aria-labelledby="clients-title">
+        <header class="panel__head">
+          <h2 id="clients-title">Клиенты</h2>
+          <output id="count" class="muted" aria-live="polite"></output>
+        </header>
+
+        <ul id="clients-cards" class="cards" role="list"></ul>
+
+        <div id="clients-table-wrap" hidden>
+          <table class="table">
+            <caption>Список клиентов</caption>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Клиент</th>
+                <th scope="col">Компания</th>
+                <th scope="col">Статус</th>
+                <th scope="col">Создан</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Сделки -->
+      <section class="panel" aria-labelledby="deals-title">
+        <header class="panel__head"><h2 id="deals-title">Последние сделки</h2></header>
+        <table class="table">
+          <caption>Активные сделки</caption>
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Клиент</th>
+              <th scope="col">Сумма</th>
+              <th scope="col">Статус</th>
+              <th scope="col">Дата</th>
+            </tr>
+          </thead>
+          <tbody id="deals-tbody"></tbody>
+        </table>
+      </section>
+
+      <!-- Активности -->
+      <section class="panel" aria-labelledby="activities-title">
+        <header class="panel__head"><h2 id="activities-title">Активности</h2></header>
+        <div id="activities" class="accordion"></div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <address>Связь: <a href="mailto:crm@example.com">crm@example.com</a></address>
+    <p>© <time datetime="2024">2024</time> CRM System</p>
+  </footer>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toasts" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
